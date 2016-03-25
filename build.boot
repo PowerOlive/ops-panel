@@ -9,9 +9,10 @@
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
                  [compojure "1.4.0"]
-                 [hiccup "1.0.5"]
                  ;[org.clojure/core.async "0.2.374"]
+                 [hiccup "1.0.5"]
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
+                 [reagent "0.6.0-alpha"]
                  [ring/ring-defaults "0.1.5"]
                  ;[com.taoensso/sente "1.8.0-beta1"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
@@ -37,7 +38,7 @@
             :reload true)
      (watch)
      (speak)
-     (reload ;:on-jsload 'ops-panel.core/main
+     (reload :on-jsload 'ops-panel.core/main
              ;; XXX: make this configurable
              :open-file "emacsclient -n +%s:%s %s")
      (cljs-repl)
@@ -45,5 +46,4 @@
      (target :dir #{"target"})))
 
 (deftask build []
-  ;; XXX: placeholder; enable this by exporting main.
   (cljs :optimizations :advanced))
