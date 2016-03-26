@@ -18,6 +18,6 @@ Experiments in visualization and web-based ops helpers.
 
 - Server-side logic goes in `src/clj/ops_panel`.  To see the effect of server-side changes, save the relevant `.clj` files and reload the page,
 
-- Changes to Clojurescript and to static assets (which put in `/html`) should be shown on save; no page reload necessary.
+- Client-side logic is in `src/cljs/ops_panel`.  Static assets are in `/html`.  Changes in both should be shown on save; no page reload necessary.
 
-If you're interested in this kind of stuff, [this tutorial](https://github.com/magomimmo/modern-cljs/blob/master/doc/second-edition/tutorial-01.md) is a more leisurely introduction to boot and related tools.
+If you're interested in dev tooling setup, [this tutorial](https://github.com/magomimmo/modern-cljs/blob/master/doc/second-edition/tutorial-01.md) is a more leisurely introduction to boot and related tools.
