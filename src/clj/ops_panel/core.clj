@@ -1,9 +1,15 @@
 (ns ops-panel.core
-  (:require [clojure.pprint :as pp]
+  (:require [clj-ssh.ssh :as ssh]
+            [clojure.pprint :as pp]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :refer [files not-found resources]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [hiccup.core :refer [html]]))
+
+(defn ssh [host cmd]
+  (let [agent (ssh/ssh-agent {})
+        session (ssh/session agent host {:strict-host-key-checking :no})]
+    (ssh/with-connection session (ssh/ssh session {:cmd cmd}))))
 
 (defroutes handler
   (GET "/" req
