@@ -1,6 +1,7 @@
 (ns ops-panel.core
   (:require [clj-ssh.ssh :as ssh]
             [clojure.pprint :as pp]
+            [com.climate.claypoole :as pool]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :refer [files not-found resources]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
@@ -10,6 +11,10 @@
   (let [agent (ssh/ssh-agent {})
         session (ssh/session agent host {:strict-host-key-checking :no})]
     (ssh/with-connection session (ssh/ssh session {:cmd cmd}))))
+
+(defn pssh [hosts cmd]
+  ;;XXX: reuse pool in concurrent requests
+  (pool/pmap (min (count hosts) 50) #(ssh % cmd) hosts))
 
 (defroutes handler
   (GET "/" req

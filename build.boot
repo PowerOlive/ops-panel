@@ -6,6 +6,7 @@
                  [adzerk/boot-reload "0.4.5" :scope "test"]
                  [pandeiro/boot-http "0.7.2" :scope "test"]
                  [crisptrutski/boot-cljs-test "0.2.2-SNAPSHOT" :scope "test"]
+                 [com.climate/claypoole "1.1.2"]
                  [clj-ssh "0.5.14"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
