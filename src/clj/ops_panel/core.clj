@@ -4,8 +4,10 @@
             [com.climate.claypoole :as pool]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :refer [files not-found resources]]
-            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
-            [hiccup.core :refer [html]]))
+            [digitalocean.v2.core :as do]
+            [environ.core :refer [env]]
+            [hiccup.core :refer [html]]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
 
 (defn ssh [host cmd]
   (let [agent (ssh/ssh-agent {})
@@ -16,6 +18,16 @@
   ;; XXX: reuse pool in concurrent requests, maybe cache it for some time or
   ;; even for the web server's lifetime
   (pool/pmap (min (count hosts) 50) #(ssh % cmd) hosts))
+
+(defn all-droplets []
+  (loop [page 1
+         ret []]
+    (println "Fetching page" page "...")
+    (let [resp (do/droplets (env :do-token) "" {:page page})
+          droplets (into ret (:droplets resp))]
+      (if (get-in resp [:links :pages :last])
+        (recur (+ page 1) droplets)
+        droplets))))
 
 (defroutes handler
   (GET "/" req

@@ -12,6 +12,8 @@
                  [org.clojure/clojurescript "1.8.34"]
                  [compojure "1.4.0"]
                  ;[org.clojure/core.async "0.2.374"]
+                 [digitalocean "1.2"]
+                 [environ "1.0.2"]
                  [hiccup "1.0.5"]
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
                  [reagent "0.6.0-alpha"]
