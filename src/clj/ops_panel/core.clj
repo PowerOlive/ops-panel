@@ -21,15 +21,22 @@
   ;; even for the web server's lifetime
   (pool/pmap (min (count hosts) 50) #(ssh % cmd) hosts))
 
+(def do-link-re #"https://api.digitalocean.com/v2/droplets/\?page=(\d+)")
+
 (defn all-do-vpss []
-  (loop [page 1
-         ret []]
-    (println "Fetching page" page "...")
-    (let [resp (do/droplets (env :do-token) "" {:page page})
-          droplets (into ret (:droplets resp))]
-      (if (get-in resp [:links :pages :last])
-        (recur (+ page 1) droplets)
-        droplets))))
+  (let [first-page (do/droplets (env :do-token))
+        last-index (->> first-page
+                        :links
+                        :pages
+                        :last
+                        (re-find do-link-re)
+                        last
+                        java.lang.Integer/parseInt)]
+    (reduce into
+            (:droplets first-page)
+            (pool/pmap (min last-index 50)
+                       #(:droplets (do/droplets (env :do-token) "" {:page %}))
+                       (range 2 (+ last-index 1))))))
 
 (defn all-vultr-vpss []
   (-> "https://api.vultr.com/v1/server/list"
