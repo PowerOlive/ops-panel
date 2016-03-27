@@ -57,3 +57,8 @@
       json/read-str
       vals
       (map vl-vps)))
+
+(defn all-vpss []
+  (let [dos (future (vec (all-do-vpss)))
+        vls (future (vec (all-vl-vpss)))]
+    (into @dos @vls)))
