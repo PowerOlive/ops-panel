@@ -1,5 +1,6 @@
 (ns ops-panel.core
   (:require [clj-ssh.ssh :as ssh]
+            [clojure.data.json :as json]
             [clojure.pprint :as pp]
             [com.climate.claypoole :as pool]
             [compojure.core :refer [defroutes GET POST]]
@@ -7,6 +8,7 @@
             [digitalocean.v2.core :as do]
             [environ.core :refer [env]]
             [hiccup.core :refer [html]]
+            [org.httpkit.client :as http]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
 
 (defn ssh [host cmd]
@@ -19,7 +21,7 @@
   ;; even for the web server's lifetime
   (pool/pmap (min (count hosts) 50) #(ssh % cmd) hosts))
 
-(defn all-droplets []
+(defn all-do-vpss []
   (loop [page 1
          ret []]
     (println "Fetching page" page "...")
@@ -28,6 +30,13 @@
       (if (get-in resp [:links :pages :last])
         (recur (+ page 1) droplets)
         droplets))))
+
+(defn all-vultr-vpss []
+  (-> "https://api.vultr.com/v1/server/list"
+      (http/get {:headers {"API-Key" (env :vultr-apikey)}})
+      deref
+      :body
+      json/read-str))
 
 (defroutes handler
   (GET "/" req
