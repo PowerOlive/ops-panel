@@ -11,7 +11,7 @@
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
                  [compojure "1.4.0"]
-                 ;[org.clojure/core.async "0.2.374"]
+                 [org.clojure/core.async "0.2.374"]
                  [org.clojure/data.json "0.2.6"]
                  [digitalocean "1.2"]
                  [environ "1.0.2"]
@@ -20,7 +20,7 @@
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
                  [reagent "0.6.0-alpha"]
                  [ring/ring-defaults "0.1.5"]
-                 ;[com.taoensso/sente "1.8.0-beta1"]
+                 [com.taoensso/sente "1.8.1"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
                  [weasel "0.7.0" :scope "test"]])
 
