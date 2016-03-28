@@ -1,23 +1,11 @@
 (ns ops-panel.core
-  (:require [clj-ssh.ssh :as ssh]
-            [clojure.pprint :as pp]
-            [com.climate.claypoole :as pool]
+  (:require [clojure.pprint :as pp]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :refer [files not-found resources]]
             [hiccup.core :refer [html]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]))
-
-(defn ssh [host cmd]
-  (let [agent (ssh/ssh-agent {})
-        session (ssh/session agent host {:username "lantern" :strict-host-key-checking :no})]
-    (ssh/with-connection session (ssh/ssh session {:cmd cmd}))))
-
-(defn pssh [hosts cmd]
-  ;; XXX: reuse pool in concurrent requests, maybe cache it for some time or
-  ;; even for the web server's lifetime
-  (pool/pmap (min (count hosts) 50) #(ssh % cmd) hosts))
 
 ;; sente
 (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
