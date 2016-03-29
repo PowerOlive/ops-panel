@@ -6,7 +6,8 @@
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [taoensso.sente :as sente]
             [org.httpkit.server :as http-kit]
-            [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]))
+            [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)])
+  (:gen-class))
 
 ;; sente setup
 
@@ -75,4 +76,7 @@
   (start-web-server! app web-port))
 
 ;; XXX: do this only on development.
-(start-router!)
+;(start-router!)
+
+(defn -main []
+  (start! 62000))

@@ -54,4 +54,11 @@
      (target :dir #{"target"})))
 
 (deftask build []
-  (cljs :optimizations :advanced))
+  (comp
+   (cljs :optimizations :advanced)
+   (aot :namespace '#{ops-panel.core})
+   (pom :project 'ops-panel
+        :version "0.1.0-SNAPSHOT")
+   (uber)
+   (jar :main 'ops-panel.core)
+   (target :dir #{"target"})))
