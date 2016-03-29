@@ -13,11 +13,13 @@
                  [compojure "1.4.0"]
                  [org.clojure/core.async "0.2.374"]
                  [org.clojure/data.json "0.2.6"]
+                 [datascript "0.15.0"]
                  [digitalocean "1.2"]
                  [environ "1.0.2"]
                  [hiccup "1.0.5"]
                  [http-kit "2.1.19"]  ;; same as used by boot-http
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
+                 [posh "0.3.5"]
                  [reagent "0.6.0-alpha"]
                  [ring/ring-defaults "0.1.5"]
                  [com.taoensso/sente "1.8.1"]
