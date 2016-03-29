@@ -21,14 +21,13 @@
 
 (defmulti sente-handler :id)
 
-;; should never be hit really.
 (defmethod sente-handler :default
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
   (let [session (:session ring-req)
         uid     (:uid     session)]
     (println "Unhandled event:" event)
     (when ?reply-fn
-      (?reply-fn {:umatched-event-as-echoed-from-from-server event}))))
+      (?reply-fn {:umatched-event-as-echoed-from-server event}))))
 
 ;; test handler
 (defmethod sente-handler :test/inc
