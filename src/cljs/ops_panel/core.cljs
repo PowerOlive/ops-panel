@@ -27,7 +27,7 @@
                               :where [0 :counter/value ?c]])]
     [:div (str "Current value is " counter-value)
      [:input {:type "button"
-              :value "Click me WOW"
+              :value "Click me NOW"
               :on-click #(chsk-send! [:test/inc counter-value]
                                      5000
                                      (fn [resp]

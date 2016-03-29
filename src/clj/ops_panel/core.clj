@@ -51,14 +51,9 @@
                  [:body
                   [:h2 "Ops Panel (WIP)"]
                   [:div "An amazing ops panel will be here Soon&trade;!"]
-                  [:h2 "Client-generated stuff..."]
-                  [:div "The stuff below brought to you by Clojurescript magic:"]
                   [:div#app_container
                    [:script {:type "text/javascript" :src "main.js"}]
-                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]
-                  [:h2 "Back to static stuff..."]
-                  [:div "This is your request:"]
-                  [:pre (with-out-str (pp/pprint req))]])})
+                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]])})
 
   ;; sente
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
