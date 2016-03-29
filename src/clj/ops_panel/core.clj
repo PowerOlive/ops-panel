@@ -5,9 +5,11 @@
             [hiccup.core :refer [html]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [taoensso.sente :as sente]
+            [org.httpkit.server :as http-kit]
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]))
 
-;; sente
+;; sente setup
+
 (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
               connected-uids]}
       (sente/make-channel-socket! sente-web-server-adapter {})]
@@ -16,6 +18,30 @@
   (def ch-chsk ch-recv)
   (def chsk-send! send-fn)
   (def connected-uids connected-uids))
+
+(defmulti sente-handler :id)
+
+;; should never be hit really.
+(defmethod sente-handler :default
+  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
+  (let [session (:session ring-req)
+        uid     (:uid     session)]
+    (println "Unhandled event:" event)
+    (when ?reply-fn
+      (?reply-fn {:umatched-event-as-echoed-from-from-server event}))))
+
+;; test handler
+(defmethod sente-handler :test/inc
+  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
+  (?reply-fn (inc ?data)))
+
+(defonce router_ (atom nil))
+(defn  stop-router! [] (when-let [stop-f @router_] (stop-f)))
+(defn start-router! []
+  (stop-router!)
+  (reset! router_
+          (sente/start-server-chsk-router!
+           ch-chsk sente-handler)))
 
 (defroutes handler
 
@@ -26,12 +52,14 @@
                  [:body
                   [:h2 "Ops Panel (WIP)"]
                   [:div "An amazing ops panel will be here Soon&trade;!"]
-                  [:div "This is your request:"]
-                  [:pre (with-out-str (pp/pprint req))]
+                  [:h2 "Client-generated stuff..."]
                   [:div "The stuff below brought to you by Clojurescript magic:"]
                   [:div#app_container
                    [:script {:type "text/javascript" :src "main.js"}]
-                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]])})
+                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]
+                  [:h2 "Back to static stuff..."]
+                  [:div "This is your request:"]
+                  [:pre (with-out-str (pp/pprint req))]])})
 
   ;; sente
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
@@ -43,3 +71,14 @@
 
 (def app
   (wrap-defaults handler site-defaults))
+
+(defn start-web-server! [ring-handler port]
+    (println "Starting http-kit...")
+    (http-kit/run-server ring-handler {:port port}))
+
+(defn start! [web-port]
+  (start-router!)
+  (start-web-server! app web-port))
+
+;; XXX: do this only on development.
+(start-router!)
