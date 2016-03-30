@@ -6,6 +6,7 @@
                  [adzerk/boot-reload "0.4.5" :scope "test"]
                  [pandeiro/boot-http "0.7.2" :scope "test"]
                  [crisptrutski/boot-cljs-test "0.2.2-SNAPSHOT" :scope "test"]
+                 [boot-environ "1.0.2"]
                  [com.climate/claypoole "1.1.2"]
                  [clj-ssh "0.5.14"]
                  [org.clojure/clojure "1.8.0"]
@@ -30,6 +31,7 @@
   '[adzerk.boot-cljs      :refer [cljs]]
   '[adzerk.boot-cljs-repl :refer [cljs-repl start-repl]]
   '[adzerk.boot-reload    :refer [reload]]
+  '[environ.boot :refer [environ]]
   '[crisptrutski.boot-cljs-test  :refer [test-cljs]]
   '[pandeiro.boot-http    :refer [serve]])
 
@@ -40,7 +42,8 @@
      (test-cljs)))
 
 (deftask dev []
-  (comp (serve :handler 'ops-panel.core/app
+  (comp (environ :env {:in-development "indeed"})
+     (serve :handler 'ops-panel.core/app
             :resource-root "target"
             :httpkit true
             :reload true)

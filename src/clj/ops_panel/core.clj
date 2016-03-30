@@ -2,18 +2,24 @@
   (:require [clojure.pprint :as pp]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :refer [files not-found resources]]
+            [environ.core :refer [env]]
             [hiccup.core :refer [html]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [taoensso.sente :as sente]
             [org.httpkit.server :as http-kit]
-            [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)])
+            [taoensso.sente.server-adapters.http-kit :as http-kit-adapter]
+            [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter)])
   (:gen-class))
+
+(def in-development (= (env :in-development) "indeed"))
 
 ;; sente setup
 
 (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
               connected-uids]}
-      (sente/make-channel-socket! sente-web-server-adapter {})]
+      (sente/make-channel-socket! (if in-development
+                                    http-kit-adapter/sente-web-server-adapter
+                                    nginx-adapter/sente-web-server-adapter) {})]
   (def ring-ajax-post ajax-post-fn)
   (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
   (def ch-chsk ch-recv)
@@ -75,8 +81,8 @@
   (start-router!)
   (start-web-server! app web-port))
 
-;; XXX: do this only on development.
-;(start-router!)
+(if in-development
+  (start-router!))
 
 (defn -main []
   (start! 62000))
