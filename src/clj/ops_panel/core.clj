@@ -53,15 +53,15 @@
                   [:h2 "Ops Panel (WIP)"]
                   [:div "An amazing ops panel will be here Soon&trade;!"]
                   [:div#app_container
-                   [:script {:type "text/javascript" :src "main.js"}]
+                   [:script {:type "text/javascript" :src "js/main.js"}]
                    [:script {:type "text/javascript"} "ops_panel.core.main();"]]])})
 
   ;; sente
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
   (POST "/chsk" req (ring-ajax-post req))
 
-  (files "/" {:root "target"})
-  (resources "/" {:root "target"})
+  (resources "/")
+  (files "/")
   (not-found "Page not found."))
 
 (def app

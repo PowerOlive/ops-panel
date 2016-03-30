@@ -1,6 +1,6 @@
 (set-env!
  :source-paths #{"src/clj" "src/cljs" "src/cljc"}
- :resource-paths #{"html"}
+ :resource-paths #{"res"}
  :dependencies '[[adzerk/boot-cljs "1.7.228-1" :scope "test"]
                  [adzerk/boot-cljs-repl "0.3.0" :scope "test"]
                  [adzerk/boot-reload "0.4.5" :scope "test"]
@@ -60,4 +60,5 @@
    (pom :project 'ops-panel
         :version "0.1.0-SNAPSHOT")
    (uber)
-   (jar :main 'ops-panel.core)))
+   (jar :main 'ops-panel.core)
+   (target :dir #{"target"})))
