@@ -28,6 +28,15 @@ If you're interested in dev tooling setup, [this tutorial](https://github.com/ma
 
 This code is deployed to [`ops.lantern.io`](http://ops.lantern.io).
 
+### tl;dr
+
+ssh lantern@ops.lantern.io
+cd ops-panel
+git pull
+sudo script/deploy.sh
+
+### Details
+
 The production deployment uses [nginx-clojure](https://github.com/nginx-clojure/nginx-clojure) as the web server.  This was chosen for having native support for TLS and for sente.
 
 Our deployment of nginx-clojure was set up manually, roughly following [these steps](https://github.com/nginx-clojure/nginx-clojure/tree/master/example-projects/clojure-web-example).  Since this is a singleton machine, I didn't bother making a Salt configuration for this.  The only custom parts are the files in [`etc`](https://github.com/getlantern/ops-panel/tree/master/etc).  The (so far unoptimized) configuration for the web server is in [`etc/nginx.conf`](https://github.com/getlantern/ops-panel/blob/master/etc/nginx.conf).  The upstart configuration for this server is in [`etc/upstart_conf`](https://github.com/getlantern/ops-panel/blob/master/etc/upstart_conf).
