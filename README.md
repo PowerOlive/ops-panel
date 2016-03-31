@@ -34,7 +34,7 @@ This code is deployed to [`ops.lantern.io`](http://ops.lantern.io).
 ssh lantern@ops.lantern.io
 cd ops-panel
 git pull
-sudo script/deploy.sh
+script/deploy.sh
 ```
 
 ### Details
