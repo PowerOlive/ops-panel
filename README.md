@@ -20,4 +20,16 @@ Experiments in visualization and web-based ops helpers.
 
 - Client-side logic is in `src/cljs/ops_panel`.  Static assets are in `/res/public`.  Changes in both should be shown on save; no page reload necessary.
 
+An [http-kit](http://www.http-kit.org/) server is used for development.  This is because it's the only option supported natively by both [sente](https://github.com/ptaoussanis/sente) and [boot-http](https://github.com/pandeiro/boot-http).
+
 If you're interested in dev tooling setup, [this tutorial](https://github.com/magomimmo/modern-cljs/blob/master/doc/second-edition/tutorial-01.md) is a more leisurely introduction to boot and related tools.
+
+## Deploying
+
+This code is deployed to [`ops.lantern.io`](http://ops.lantern.io).
+
+The production deployment uses [nginx-clojure](https://github.com/nginx-clojure/nginx-clojure) as the web server.  This was chosen for having native support for TLS and for sente.
+
+Our deployment of nginx-clojure was set up manually, roughly following [these steps](https://github.com/nginx-clojure/nginx-clojure/tree/master/example-projects/clojure-web-example).  Since this is a singleton machine, I didn't bother making a Salt configuration for this.  The only custom parts are the files in [`etc`](https://github.com/getlantern/ops-panel/tree/master/etc).  The (so far unoptimized) configuration for the web server is in [`etc/nginx.conf`](https://github.com/getlantern/ops-panel/blob/master/etc/nginx.conf).  The upstart configuration for this server is in [`etc/upstart_conf`](https://github.com/getlantern/ops-panel/blob/master/etc/upstart_conf).
+
+To create an [uberjar](http://stackoverflow.com/questions/11947037/what-is-an-uber-jar) for deployment run `boot build`.  This will create a `target/project.jar` which should substitute the one in `/opt/nginx-clojure-0.4.4/libs/`.  Since uploading this file may be onerous, a clone of this repo is checked out in `/home/lantern` in the production machine.
