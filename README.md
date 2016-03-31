@@ -30,10 +30,12 @@ This code is deployed to [`ops.lantern.io`](http://ops.lantern.io).
 
 ### tl;dr
 
+```bash
 ssh lantern@ops.lantern.io
 cd ops-panel
 git pull
 sudo script/deploy.sh
+```
 
 ### Details
 
