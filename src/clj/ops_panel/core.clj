@@ -6,10 +6,8 @@
             [hiccup.core :refer [html]]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [taoensso.sente :as sente]
-            [org.httpkit.server :as http-kit]
             [taoensso.sente.server-adapters.http-kit :as http-kit-adapter]
-            [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter)])
-  (:gen-class))
+            [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter]))
 
 (def in-development (= (env :in-development) "indeed"))
 
@@ -19,7 +17,8 @@
               connected-uids]}
       (sente/make-channel-socket! (if in-development
                                     http-kit-adapter/sente-web-server-adapter
-                                    nginx-adapter/sente-web-server-adapter) {})]
+                                    nginx-adapter/sente-web-server-adapter)
+                                  {})]
   (def ring-ajax-post ajax-post-fn)
   (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
   (def ch-chsk ch-recv)
@@ -73,16 +72,10 @@
 (def app
   (wrap-defaults handler site-defaults))
 
-(defn start-web-server! [ring-handler port]
-    (println "Starting http-kit...")
-    (http-kit/run-server ring-handler {:port port}))
-
-(defn start! [web-port]
-  (start-router!)
-  (start-web-server! app web-port))
-
 (if in-development
   (start-router!))
 
-(defn -main []
-  (start! 62000))
+;; This is set in nginx.conf as jvm_init_handler_name, so it will get called on
+;; startup.
+(defn nginx-init! [_]
+  (start-router!))

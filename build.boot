@@ -18,7 +18,11 @@
                  [digitalocean "1.2"]
                  [environ "1.0.2"]
                  [hiccup "1.0.5"]
+                 ;; used for the sente adapter in development, and for the http
+                 ;; client
                  [http-kit "2.1.19"]  ;; same as used by boot-http
+                 ;; used for the sente adapter in deployment
+                 [nginx-clojure "0.4.4"]
                  [com.cemerick/piggieback "0.2.1" :scope "test"]
                  [posh "0.3.5"]
                  [reagent "0.6.0-alpha"]
