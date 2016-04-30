@@ -65,63 +65,63 @@
                      [:script {:type "text/javascript" :src "js/main.js"}]
                      [:script {:type "text/javascript"} "ops_panel.core.main();"]]
                     [:h2 "Your request"]
-                    [:div [:pre (pp/pprint req)]]])}
-      (let [state "12345" ;; XXX: make this an unguessable random string
-            redirect-url (str (assoc (url "https://github.com/login/oauth/authorize")
+                    [:div [:pre (with-out-str (pp/pprint req))]]])}
+      (let [redirect-url (str (assoc (url "https://github.com/login/oauth/authorize")
                                      :query
-                                     {:client_id github-client-id
-                                      :state state}))]
+                                     {:client_id github-client-id}))]
         {:status 303
          :headers {"content-type" "text/html"
                    "Location" redirect-url}
          :session (assoc (get req :session {})
-                         :github-login-state state
                          :github-login-original-path "/")
          :body (html [:head [:title "Please log in"]]
                      [:body
                       [:h2 "Please log in"]
                       [:p "Redirecting you to " redirect-url " to log in."]])})))
 
-(defn github-auth-cb [code state session-state req]
-  (if-not (= state session-state)
-    {:status 401
-     :body (html [:head [:title "401 Unauthorized"]]
-                 [:body [:h2 "401 Unauthorized"]
-                  [:p "Mismatch in session state."]])}
-    (let [token-resp @(http/post "https://github.com/login/oauth/access_token"
-                           {:headers {:accept "application/json"}
-                            :form-params {:client_id github-client-id
-                                          :client_secret (env :github-client-secret)
-                                          :code code
-                                          :state state}})
-          access-token (->> token-resp
-                            :body
-                            json/read-str
-                            #(get % "access_token"))
-          user-resp @(http/get "https://api.github.com/user"
-                          {:headers {:accept "application/json"
-                                     :authorization (str "token " access-token)}})
-          user (->> user-resp
-                    :body
-                    json/read-str
-                    #(get % "login"))
-          original-path (get-in req [:session :github-login-original-path] "/")]
-      {:status 303
-       :headers {"content-type" "text/html"
-                 "location" original-path}
-       :session (assoc (get req :session {}) :user user)
-       :body (html [:head [:title "Login successful"]]
-                   [:body [:h1 "Login successful"]
-                    [:p "Redirecting you to "
-                     [:a {:href original-path} original-path]]])})))
+(defn github-auth-cb [code req]
+  (let [token-resp @(http/post "https://github.com/login/oauth/access_token"
+                               {:headers {"Accept" "application/json"}
+                                :form-params {:client_id github-client-id
+                                              :client_secret (env :github-client-secret)
+                                              :code code}})
+        access-token (get (json/read-str (:body token-resp))
+                          "access_token")
+        user-resp @(http/get "https://api.github.com/user"
+                             {:headers {"Accept" "application/json"
+                                        "Authorization" (str "token " access-token)}})
+        user (get (json/read-str (:body user-resp))
+                  "login")
+        original-path (get-in req [:session :github-login-original-path] "/")]
+    (println "client_secret" (env :github-client-secret))
+    (println "code" code)
+    (println "req" req)
+    (println "token-resp" token-resp)
+    (println "body" (:body token-resp))
+    (println "body-at" (get (:body token-resp) "access_token"))
+    (println "loaded-body" (json/read-str (:body token-resp)))
+    (println "loaded-body-at" (get (json/read-str (:body token-resp)) "access_token"))
+    (println "access-token" access-token)
+    (println "user-resp" user-resp)
+    (println "user" user)
+    {:status 303
+     :headers {"content-type" "text/html"
+               "location" original-path}
+     :session (assoc (get req :session {}) :user (str user))
+     :body (html [:head [:title "Login successful"]]
+                 [:body [:h1 "Login successful"]
+                  [:p "Redirecting you to "
+                   [:a {:href original-path} original-path]]])}))
+
+(comment  [{{:keys [code state]} :params
+            {session-state :state} :session
+            :as req}])
 
 (defroutes handler
 
   (GET "/" req (root req))
-  (GET "/github-auth-cb" {{:keys [code state]} :params
-                          {session-state :state} :session
-                          :as req}
-    (github-auth-cb code state session-state req))
+  (GET "/github-auth-cb" req
+    (github-auth-cb (get-in req [:params :code]) req))
   ;; sente
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
   (POST "/chsk" req (ring-ajax-post req))
