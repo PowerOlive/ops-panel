@@ -29,6 +29,7 @@
                  [ring/ring-defaults "0.1.5"]
                  [com.taoensso/sente "1.8.1"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
+                 [com.cemerick/url "0.1.1"]
                  [weasel "0.7.0" :scope "test"]])
 
 (require
