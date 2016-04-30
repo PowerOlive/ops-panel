@@ -48,18 +48,37 @@
           (sente/start-server-chsk-router!
            ch-chsk sente-handler)))
 
+(defn root [req]
+  (if (get-in req [:session :authorized])
+      {:status 200
+       :headers {"content-type" "text/html"}
+       :body (html [:head [:title "ops-panel (WIP)"]]
+                   [:body
+                    [:h2 "Ops Panel (WIP)"]
+                    [:div "An amazing ops panel will be here Soon&trade;!"]
+                    [:div#app_container
+                     [:script {:type "text/javascript" :src "js/main.js"}]
+                     [:script {:type "text/javascript"} "ops_panel.core.main();"]]])}
+      {:status 200
+       :headers {"content-type" "text/html"}
+       :body (html [:head [:title "Please log in"]]
+                   [:body
+                    [:h2 "Please log in"]
+                    [:form {:action "/login"}
+                     [:input {:type "submit" :value "Login"}]]])}))
+
+(defn login [req]
+  {:status 303
+   :headers {"Location" "/"}
+   :session (assoc (get req :session {}) :authorized true)
+   :body (html [:head [:title "Successfully logged in"]]
+               [:body "Successfully logged in; redirecting to"
+                [:a {:href "/"} "/"]])})
+
 (defroutes handler
 
-  (GET "/" req
-    {:status 200
-     :headers {"content-type" "text/html"}
-     :body (html [:head [:title "ops-panel (WIP)"]]
-                 [:body
-                  [:h2 "Ops Panel (WIP)"]
-                  [:div "An amazing ops panel will be here Soon&trade;!"]
-                  [:div#app_container
-                   [:script {:type "text/javascript" :src "js/main.js"}]
-                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]])})
+  (GET "/" req (root req))
+  (GET "/login" req (login req))
 
   ;; sente
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
