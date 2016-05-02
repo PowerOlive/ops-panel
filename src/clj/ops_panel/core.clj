@@ -10,11 +10,10 @@
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :as http-kit-adapter]
-            [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter]))
+            [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter]
+            [clojure.string :as str]))
 
 (def in-development (= (env :in-development) "indeed"))
-
-(def github-client-id "dbcf71904287bde31110")
 
 ;; sente setup
 
@@ -68,7 +67,8 @@
                     [:div [:pre (with-out-str (pp/pprint req))]]])}
       (let [redirect-url (str (assoc (url "https://github.com/login/oauth/authorize")
                                      :query
-                                     {:client_id github-client-id}))]
+                                     {:client_id (env :github-client-id)
+                                      :scope "read:org"}))]
         {:status 303
          :headers {"content-type" "text/html"
                    "Location" redirect-url}
@@ -82,11 +82,13 @@
 (defn github-auth-cb [code req]
   (let [token-resp @(http/post "https://github.com/login/oauth/access_token"
                                {:headers {"Accept" "application/json"}
-                                :form-params {:client_id github-client-id
+                                :form-params {:client_id (env :github-client-id)
                                               :client_secret (env :github-client-secret)
                                               :code code}})
-        access-token (get (json/read-str (:body token-resp))
-                          "access_token")
+        token-map (json/read-str (:body token-resp))
+        scope (str/split (get token-map "scope"))
+        access-token (get token-map "access_token")
+;        orgs-resp @(http/get "https://api.github.com/")
         user-resp @(http/get "https://api.github.com/user"
                              {:headers {"Accept" "application/json"
                                         "Authorization" (str "token " access-token)}})
