@@ -13,6 +13,7 @@
                  [org.clojure/clojurescript "1.8.34"]
                  [compojure "1.4.0"]
                  [org.clojure/core.async "0.2.374"]
+                 [crypto-random "1.2.0"]
                  [org.clojure/data.json "0.2.6"]
                  [datascript "0.15.0"]
                  [digitalocean "1.2"]
