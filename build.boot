@@ -13,6 +13,7 @@
                  [org.clojure/clojurescript "1.8.34"]
                  [compojure "1.4.0"]
                  [org.clojure/core.async "0.2.374"]
+                 [crypto-random "1.2.0"]
                  [org.clojure/data.json "0.2.6"]
                  [datascript "0.15.0"]
                  [digitalocean "1.2"]
@@ -29,6 +30,7 @@
                  [ring/ring-defaults "0.1.5"]
                  [com.taoensso/sente "1.8.1"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
+                 [com.cemerick/url "0.1.1"]
                  [weasel "0.7.0" :scope "test"]])
 
 (require

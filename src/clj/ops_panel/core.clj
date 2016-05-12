@@ -1,10 +1,13 @@
+;;; Compojure and Sente routing.
+
 (ns ops-panel.core
   (:require [clojure.pprint :as pp]
-            [compojure.core :refer [defroutes GET POST]]
-            [compojure.route :refer [files not-found resources]]
-            [environ.core :refer [env]]
-            [hiccup.core :refer [html]]
-            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+            [compojure.core :refer (defroutes GET POST)]
+            [compojure.route :refer (files not-found resources)]
+            [environ.core :refer (env)]
+            [hiccup.core :refer (html)]
+            [ops-panel.github-login :as github-login]
+            [ring.middleware.defaults :refer (wrap-defaults site-defaults)]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :as http-kit-adapter]
             [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter]))
@@ -48,19 +51,27 @@
           (sente/start-server-chsk-router!
            ch-chsk sente-handler)))
 
-(defroutes handler
-
-  (GET "/" req
+(defn root [req]
+  (if-let [user (get-in req [:session :user])]
     {:status 200
      :headers {"content-type" "text/html"}
      :body (html [:head [:title "ops-panel (WIP)"]]
                  [:body
                   [:h2 "Ops Panel (WIP)"]
+                  [:div (str "Hello, " user "!")]
                   [:div "An amazing ops panel will be here Soon&trade;!"]
                   [:div#app_container
                    [:script {:type "text/javascript" :src "js/main.js"}]
-                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]])})
+                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]
+                  [:h2 "Your request"]
+                  [:div [:pre (with-out-str (pp/pprint req))]]])}
+    (github-login/login req)))
 
+(defroutes handler
+
+  (GET "/" req (root req))
+  (GET "/github-auth-cb" [code state :as req]
+    (github-login/github-auth-cb code state (get req :session {})))
   ;; sente
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
   (POST "/chsk" req (ring-ajax-post req))
