@@ -59,11 +59,11 @@
                                          (p/transact! conn [{:db/id 0
                                                              :counter/value resp}])))}]]]))
 (defn app []
-  (refresh-whitelist!)
   [:div
    [whitelist-display]
    [sente-test]])
 
 (defn ^:export main []
+  (refresh-whitelist!)
   (r/render [app]
             (js/document.getElementById "app_container")))
