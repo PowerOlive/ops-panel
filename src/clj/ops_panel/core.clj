@@ -7,6 +7,7 @@
             [environ.core :refer (env)]
             [hiccup.core :refer (html)]
             [ops-panel.github-login :as github-login]
+            [ops-panel.ip-whitelist :as ip-wl]
             [ring.middleware.defaults :refer (wrap-defaults site-defaults)]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :as http-kit-adapter]
@@ -43,6 +44,14 @@
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
   (?reply-fn (inc ?data)))
 
+(defmethod sente-handler :ops/whitelist-ip
+  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
+  (if-let [user (get-in ring-req [:session :user])]
+    (do
+      (ip-wl/whitelist-ip user (:remote-addr ring-req))
+      (?reply-fn (ip-wl/whitelisted-ips user)))
+    (?reply-fn :error/not-logged-in)))
+
 (defonce router_ (atom nil))
 (defn  stop-router! [] (when-let [stop-f @router_] (stop-f)))
 (defn start-router! []
@@ -59,12 +68,9 @@
                  [:body
                   [:h2 "Ops Panel (WIP)"]
                   [:div (str "Hello, " user "!")]
-                  [:div "An amazing ops panel will be here Soon&trade;!"]
                   [:div#app_container
                    [:script {:type "text/javascript" :src "js/main.js"}]
-                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]
-                  [:h2 "Your request"]
-                  [:div [:pre (with-out-str (pp/pprint req))]]])}
+                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]])}
     (github-login/login req)))
 
 (defroutes handler
@@ -76,8 +82,8 @@
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
   (POST "/chsk" req (ring-ajax-post req))
 
-  (resources "/")
-  (files "/")
+  (resources "/public")
+  (files "/public")
   (not-found "Page not found."))
 
 (def app

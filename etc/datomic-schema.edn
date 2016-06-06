@@ -1,0 +1,21 @@
+;; Schema for datomic:free://localhost:4334/ops in ops.lantern.iow
+
+[
+ {:db/id #db/id[:db.part/db]
+  :db/ident :user/github-name
+  :db/unique :db.unique/identity
+  :db/valueType :db.type/string
+  :db/cardinality :db.cardinality/one
+  :db/fulltext true
+  :db/doc "Github username"
+  :db.install/_attribute :db.part/db}
+
+ {:db/id #db/id[:db.part/db]
+  :db/ident :user/whitelisted-ip
+  :db/index true
+  :db/valueType :db.type/string
+  :db/cardinality :db.cardinality/many
+  :db/fulltext true
+  :db/doc "An IP address at which we've seen this user, and which we're hence allowing to access our infrastructure without SSH alerts"
+  :db.install/_attribute :db.part/db}
+ ]
