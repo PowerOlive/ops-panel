@@ -28,7 +28,6 @@
   (chsk-send! [:ops/whitelist-ip nil]
               5000
               (fn [resp]
-                (println "resp" resp)
                 (p/transact! conn
                              [{:db/id 0
                                :user/whitelisted-ip (if (vector? resp) resp [])}]))))
@@ -42,8 +41,7 @@
             [:div "You have the following IPs whitelisted:"
              [:ul
               (for [ip whitelisted-ips]
-                (do (println ip)
-                    ^{:key ip} [:li ip]))]])]))
+                ^{:key ip} [:li ip])]])]))
 
 (defn sente-test []
   (let [counter-value @(p/q conn
