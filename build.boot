@@ -16,6 +16,7 @@
                  [crypto-random "1.2.0"]
                  [org.clojure/data.json "0.2.6"]
                  [datascript "0.15.0"]
+                 [com.datomic/datomic-free "0.9.5372"]
                  [digitalocean "1.2"]
                  [environ "1.0.2"]
                  [hiccup "1.0.5"]
@@ -41,6 +42,13 @@
   '[crisptrutski.boot-cljs-test  :refer [test-cljs]]
   '[pandeiro.boot-http    :refer [serve]])
 
+(deftask data-readers []
+  (fn [next-task]
+    (fn [fileset]
+      (#'clojure.core/load-data-readers)
+      (with-bindings {#'*data-readers* (.getRawRoot #'*data-readers*)}
+        (next-task fileset)))))
+
 (deftask auto-test []
   (merge-env! :resource-paths #{"test"})
   (comp (watch)
@@ -55,6 +63,7 @@
             :reload true)
      (watch)
      (speak)
+     (data-readers)
      (reload :on-jsload 'ops-panel.core/main
              ;; XXX: make this configurable
              :open-file "emacsclient -n +%s:%s %s")
@@ -64,6 +73,7 @@
 
 (deftask build []
   (comp
+   (data-readers)
    (cljs :optimizations :advanced)
    (aot :namespace '#{ops-panel.core})
    (pom :project 'ops-panel
