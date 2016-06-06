@@ -11,10 +11,10 @@ NGINX_ROOT=/opt/nginx-clojure-0.4.4
 DATOMIC_ROOT=/opt/datomic-free-0.9.5372
 
 echo "Stopping nginx..."
-# Free the memory for the build process.
-sudo service nginx stop
+sudo service nginx stop || echo "** WARNING: couldn't stop nginx **"
+
 echo "Stopping datomic..."
-sudo service datomic stop
+sudo service datomic stop || echo "** WARNING: couldn't stop datomic **"
 
 cd $REPO_ROOT
 echo "Building uberjar..."
