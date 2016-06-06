@@ -82,17 +82,21 @@
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
   (POST "/chsk" req (ring-ajax-post req))
 
-  (resources "/public")
+  (resources "/")
   (files "/public")
   (not-found "Page not found."))
 
 (def app
   (wrap-defaults handler site-defaults))
 
-(if in-development
+(defn start! []
+  (ip-wl/start!)
   (start-router!))
+
+(when in-development
+  (start!))
 
 ;; This is set in nginx.conf as jvm_init_handler_name, so it will get called on
 ;; startup.
 (defn nginx-init! [_]
-  (start-router!))
+  (start!))
