@@ -18,7 +18,7 @@ echo "Replacing uberjar..."
 sudo cp target/project.jar $NGINX_ROOT/libs/ops-panel.jar
 echo "Replacing config files..."
 sudo cp etc/nginx.conf $NGINX_ROOT/conf/nginx.conf
-sudo cp etc/upstart_conf /etc/init/nginx.conf
+sudo cp etc/nginx.upstart_conf /etc/init/nginx.conf
 echo "Reloading initctl configuration..."
 sudo initctl reload-configuration
 echo "Starting nginx..."
