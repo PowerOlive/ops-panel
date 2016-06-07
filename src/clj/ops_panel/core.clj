@@ -26,13 +26,20 @@
     not-authorized))
 
 (defn is-ip-whitelisted? [ip req]
-  (println ip (get-in req [:headers "whitelist-query-token"] "no token provided"))
-  (if (= (get-in req [:headers "whitelist-query-token"] "no token provided")
-             (env :whitelist-query-token))
-    {:status 200
-     :headers {"content-type" "text/plain"}
-     :body (if (ip-wl/is-ip-whitelisted? ip) "yes" "no")}
-    not-authorized))
+  (let [expected-token (env :ssh-whitelist-query-token)]
+    (println "Expected token:" (pr-str expected-token))
+    (cond
+      (or (not expected-token) (= expected-token ""))
+      {:status 500
+       :headers {"content-type" "text/plain"}
+       :body "Server error: no configured SSH_WHITELIST_QUERY_TOKEN."}
+      (not (= (get-in req [:headers "ssh-whitelist-query-token"])
+              expected-token))
+      not-authorized
+      :else
+      {:status 200
+       :headers {"content-type" "text/plain"}
+       :body (if (ip-wl/is-ip-whitelisted? ip) "yes" "no")})))
 
 (defn root [req]
   (if-let [user (get-in req [:session :user])]
