@@ -56,7 +56,7 @@
   (GET "/" req (root req))
   (GET "/github-auth-cb" [code state :as req]
     (github-login/github-auth-cb code state (get req :session {})))
-  ;;XXX make this a POST
+  ;; I tried making this a POST and for some reason I get a 403 response. Meh.
   (GET "/whitelist-ip" req (whitelist-ip req))
   (GET "/is-ip-whitelisted" [ip :as req] (is-ip-whitelisted? ip req))
   ;; XXX: this is what seems to work; figure out why!
