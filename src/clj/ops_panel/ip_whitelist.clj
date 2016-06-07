@@ -15,8 +15,15 @@
 
 (defn whitelisted-ips [github-name]
   (d/q '[:find (?ip ...)
-       :in $ ?n
-       :where [?u :user/github-name ?n]
-              [?u :user/whitelisted-ip ?ip]]
-     (d/db @dconn)
-     github-name))
+         :in $ ?n
+         :where [?u :user/github-name ?n]
+         [?u :user/whitelisted-ip ?ip]]
+       (d/db @dconn)
+       github-name))
+
+(defn is-ip-whitelisted? [ip]
+  (boolean (d/q '[:find ?u .
+                  :in $ ?ip
+                  :where [?u :user/whitelisted-ip ?ip]]
+                (d/db @dconn)
+                ip)))

@@ -12,6 +12,10 @@
 
 (def in-development (= (env :in-development) "indeed"))
 
+(def not-authorized {:status 401
+                     :headers {"content-type" "text/plain"}
+                     :body "Not authorized"})
+
 (defn whitelist-ip [req]
   (if-let [user (get-in req [:session :user])]
     (do
@@ -19,9 +23,16 @@
       {:status 200
        :headers {"content-type" "application/edn"}
        :body (pr-str (ip-wl/whitelisted-ips user))})
-    {:status 401
+    not-authorized))
+
+(defn is-ip-whitelisted? [ip req]
+  (println ip (get-in req [:headers "whitelist-query-token"] "no token provided"))
+  (if (= (get-in req [:headers "whitelist-query-token"] "no token provided")
+             (env :whitelist-query-token))
+    {:status 200
      :headers {"content-type" "text/plain"}
-     :body "Not authorized"}))
+     :body (if (ip-wl/is-ip-whitelisted? ip) "yes" "no")}
+    not-authorized))
 
 (defn root [req]
   (if-let [user (get-in req [:session :user])]
@@ -32,6 +43,11 @@
                   [:h2 "Ops Panel (WIP)"]
                   [:div (str "Hello, " user "!")]
                   [:div#app_container
+                   ;; DRY: pre-rendering what the Clojurescript side will produce.
+                   [:div "You have the following IPs whitelisted:"
+                    [:ul
+                     (for [ip (ip-wl/whitelisted-ips user)]
+                       ^{:key ip} [:li ip])]]
                    [:script {:type "text/javascript" :src "js/main.js"}]
                    [:script {:type "text/javascript"} "ops_panel.core.main();"]]])}
     (github-login/login req)))
@@ -40,7 +56,9 @@
   (GET "/" req (root req))
   (GET "/github-auth-cb" [code state :as req]
     (github-login/github-auth-cb code state (get req :session {})))
+  ;;XXX make this a POST
   (GET "/whitelist-ip" req (whitelist-ip req))
+  (GET "/is-ip-whitelisted" [ip :as req] (is-ip-whitelisted? ip req))
   ;; XXX: this is what seems to work; figure out why!
   (resources (if in-development "/public" "/"))
   (files "/public")
