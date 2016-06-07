@@ -7,49 +7,39 @@
             [environ.core :refer (env)]
             [hiccup.core :refer (html)]
             [ops-panel.github-login :as github-login]
-            [ring.middleware.defaults :refer (wrap-defaults site-defaults)]
-            [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :as http-kit-adapter]
-            [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter]))
+            [ops-panel.ip-whitelist :as ip-wl]
+            [ring.middleware.defaults :refer (wrap-defaults site-defaults)]))
 
 (def in-development (= (env :in-development) "indeed"))
 
-;; sente setup
+(def not-authorized {:status 401
+                     :headers {"content-type" "text/plain"}
+                     :body "Not authorized"})
 
-(let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
-              connected-uids]}
-      (sente/make-channel-socket! (if in-development
-                                    http-kit-adapter/sente-web-server-adapter
-                                    nginx-adapter/sente-web-server-adapter)
-                                  {})]
-  (def ring-ajax-post ajax-post-fn)
-  (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
-  (def ch-chsk ch-recv)
-  (def chsk-send! send-fn)
-  (def connected-uids connected-uids))
+(defn whitelist-ip [req]
+  (if-let [user (get-in req [:session :user])]
+    (do
+      (ip-wl/whitelist-ip user (:remote-addr req))
+      {:status 200
+       :headers {"content-type" "application/edn"}
+       :body (pr-str (ip-wl/whitelisted-ips user))})
+    not-authorized))
 
-(defmulti sente-handler :id)
-
-(defmethod sente-handler :default
-  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
-  (let [session (:session ring-req)
-        uid     (:uid     session)]
-    (println "Unhandled event:" event)
-    (when ?reply-fn
-      (?reply-fn {:umatched-event-as-echoed-from-server event}))))
-
-;; test handler
-(defmethod sente-handler :test/inc
-  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
-  (?reply-fn (inc ?data)))
-
-(defonce router_ (atom nil))
-(defn  stop-router! [] (when-let [stop-f @router_] (stop-f)))
-(defn start-router! []
-  (stop-router!)
-  (reset! router_
-          (sente/start-server-chsk-router!
-           ch-chsk sente-handler)))
+(defn is-ip-whitelisted? [ip req]
+  (let [expected-token (env :ssh-whitelist-query-token)]
+    (println "Expected token:" (pr-str expected-token))
+    (cond
+      (or (not expected-token) (= expected-token ""))
+      {:status 500
+       :headers {"content-type" "text/plain"}
+       :body "Server error: no configured SSH_WHITELIST_QUERY_TOKEN."}
+      (not (= (get-in req [:headers "ssh-whitelist-query-token"])
+              expected-token))
+      not-authorized
+      :else
+      {:status 200
+       :headers {"content-type" "text/plain"}
+       :body (if (ip-wl/is-ip-whitelisted? ip) "yes" "no")})))
 
 (defn root [req]
   (if-let [user (get-in req [:session :user])]
@@ -59,34 +49,38 @@
                  [:body
                   [:h2 "Ops Panel (WIP)"]
                   [:div (str "Hello, " user "!")]
-                  [:div "An amazing ops panel will be here Soon&trade;!"]
                   [:div#app_container
+                   ;; DRY: pre-rendering what the Clojurescript side will produce.
+                   [:div "You have the following IPs whitelisted:"
+                    [:ul
+                     (for [ip (ip-wl/whitelisted-ips user)]
+                       ^{:key ip} [:li ip])]]
                    [:script {:type "text/javascript" :src "js/main.js"}]
-                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]
-                  [:h2 "Your request"]
-                  [:div [:pre (with-out-str (pp/pprint req))]]])}
+                   [:script {:type "text/javascript"} "ops_panel.core.main();"]]])}
     (github-login/login req)))
 
 (defroutes handler
-
   (GET "/" req (root req))
   (GET "/github-auth-cb" [code state :as req]
     (github-login/github-auth-cb code state (get req :session {})))
-  ;; sente
-  (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
-  (POST "/chsk" req (ring-ajax-post req))
-
-  (resources "/")
-  (files "/")
+  ;; I tried making this a POST and for some reason I get a 403 response. Meh.
+  (GET "/whitelist-ip" req (whitelist-ip req))
+  (GET "/is-ip-whitelisted" [ip :as req] (is-ip-whitelisted? ip req))
+  ;; XXX: this is what seems to work; figure out why!
+  (resources (if in-development "/public" "/"))
+  (files "/public")
   (not-found "Page not found."))
 
 (def app
   (wrap-defaults handler site-defaults))
 
-(if in-development
-  (start-router!))
+(defn start! []
+  nil)
+
+(when in-development
+  (start!))
 
 ;; This is set in nginx.conf as jvm_init_handler_name, so it will get called on
 ;; startup.
 (defn nginx-init! [_]
-  (start-router!))
+  (start!))

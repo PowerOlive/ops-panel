@@ -9,6 +9,7 @@
                  [boot-environ "1.0.2"]
                  [com.climate/claypoole "1.1.2"]
                  [clj-ssh "0.5.14"]
+                 [cljs-ajax "0.5.5"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
                  [compojure "1.4.0"]
@@ -16,6 +17,7 @@
                  [crypto-random "1.2.0"]
                  [org.clojure/data.json "0.2.6"]
                  [datascript "0.15.0"]
+                 [com.datomic/datomic-free "0.9.5372"]
                  [digitalocean "1.2"]
                  [environ "1.0.2"]
                  [hiccup "1.0.5"]
@@ -28,7 +30,6 @@
                  [posh "0.3.5"]
                  [reagent "0.6.0-alpha"]
                  [ring/ring-defaults "0.1.5"]
-                 [com.taoensso/sente "1.8.1"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
                  [com.cemerick/url "0.1.1"]
                  [weasel "0.7.0" :scope "test"]])
@@ -40,6 +41,13 @@
   '[environ.boot :refer [environ]]
   '[crisptrutski.boot-cljs-test  :refer [test-cljs]]
   '[pandeiro.boot-http    :refer [serve]])
+
+(deftask data-readers []
+  (fn [next-task]
+    (fn [fileset]
+      (#'clojure.core/load-data-readers)
+      (with-bindings {#'*data-readers* (.getRawRoot #'*data-readers*)}
+        (next-task fileset)))))
 
 (deftask auto-test []
   (merge-env! :resource-paths #{"test"})
@@ -55,6 +63,7 @@
             :reload true)
      (watch)
      (speak)
+     (data-readers)
      (reload :on-jsload 'ops-panel.core/main
              ;; XXX: make this configurable
              :open-file "emacsclient -n +%s:%s %s")
@@ -64,6 +73,7 @@
 
 (deftask build []
   (comp
+   (data-readers)
    (cljs :optimizations :advanced)
    (aot :namespace '#{ops-panel.core})
    (pom :project 'ops-panel
