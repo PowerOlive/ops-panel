@@ -8,57 +8,20 @@
             [hiccup.core :refer (html)]
             [ops-panel.github-login :as github-login]
             [ops-panel.ip-whitelist :as ip-wl]
-            [ring.middleware.defaults :refer (wrap-defaults site-defaults)]
-            [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :as http-kit-adapter]
-            [taoensso.sente.server-adapters.nginx-clojure :as nginx-adapter]))
+            [ring.middleware.defaults :refer (wrap-defaults site-defaults)]))
 
 (def in-development (= (env :in-development) "indeed"))
 
-;; sente setup
-
-(let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
-              connected-uids]}
-      (sente/make-channel-socket! (if in-development
-                                    http-kit-adapter/sente-web-server-adapter
-                                    nginx-adapter/sente-web-server-adapter)
-                                  {})]
-  (def ring-ajax-post ajax-post-fn)
-  (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
-  (def ch-chsk ch-recv)
-  (def chsk-send! send-fn)
-  (def connected-uids connected-uids))
-
-(defmulti sente-handler :id)
-
-(defmethod sente-handler :default
-  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
-  (let [session (:session ring-req)
-        uid     (:uid     session)]
-    (println "Unhandled event:" event)
-    (when ?reply-fn
-      (?reply-fn {:umatched-event-as-echoed-from-server event}))))
-
-;; test handler
-(defmethod sente-handler :test/inc
-  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
-  (?reply-fn (inc ?data)))
-
-(defmethod sente-handler :ops/whitelist-ip
-  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
-  (if-let [user (get-in ring-req [:session :user])]
+(defn whitelist-ip [req]
+  (if-let [user (get-in req [:session :user])]
     (do
-      (ip-wl/whitelist-ip user (:remote-addr ring-req))
-      (?reply-fn (ip-wl/whitelisted-ips user)))
-    (?reply-fn :error/not-logged-in)))
-
-(defonce router_ (atom nil))
-(defn  stop-router! [] (when-let [stop-f @router_] (stop-f)))
-(defn start-router! []
-  (stop-router!)
-  (reset! router_
-          (sente/start-server-chsk-router!
-           ch-chsk sente-handler)))
+      (ip-wl/whitelist-ip user (:remote-addr req))
+      {:status 200
+       :headers {"content-type" "application/edn"}
+       :body (pr-str (ip-wl/whitelisted-ips user))})
+    {:status 401
+     :headers {"content-type" "text/plain"}
+     :body "Not authorized"}))
 
 (defn root [req]
   (if-let [user (get-in req [:session :user])]
@@ -74,15 +37,12 @@
     (github-login/login req)))
 
 (defroutes handler
-
   (GET "/" req (root req))
   (GET "/github-auth-cb" [code state :as req]
     (github-login/github-auth-cb code state (get req :session {})))
-  ;; sente
-  (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
-  (POST "/chsk" req (ring-ajax-post req))
-
-  (resources "/")
+  (GET "/whitelist-ip" req (whitelist-ip req))
+  ;; XXX: this is what seems to work; figure out why!
+  (resources (if in-development "/public" "/"))
   (files "/public")
   (not-found "Page not found."))
 
@@ -90,8 +50,7 @@
   (wrap-defaults handler site-defaults))
 
 (defn start! []
-  (ip-wl/start!)
-  (start-router!))
+  nil)
 
 (when in-development
   (start!))

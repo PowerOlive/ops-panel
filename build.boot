@@ -9,6 +9,7 @@
                  [boot-environ "1.0.2"]
                  [com.climate/claypoole "1.1.2"]
                  [clj-ssh "0.5.14"]
+                 [cljs-ajax "0.5.5"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
                  [compojure "1.4.0"]
@@ -29,7 +30,6 @@
                  [posh "0.3.5"]
                  [reagent "0.6.0-alpha"]
                  [ring/ring-defaults "0.1.5"]
-                 [com.taoensso/sente "1.8.1"]
                  [org.clojure/tools.nrepl "0.2.12" :scope "test"]
                  [com.cemerick/url "0.1.1"]
                  [weasel "0.7.0" :scope "test"]])

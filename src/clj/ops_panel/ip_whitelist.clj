@@ -6,10 +6,7 @@
 ;; XXX: we'll probably need to move this elsewhere as more subsystems use the DB.
 (def datomic-uri "datomic:free://localhost:4334/ops")
 
-(def dconn (atom nil))
-
-(defn start! []
-  (swap! dconn (d/connect datomic-uri)))
+(def dconn (delay (d/connect datomic-uri)))
 
 (defn whitelist-ip [github-name ip-address]
   (d/transact @dconn [{:db/id #db/id[:db.part/user]
